@@ -2,6 +2,7 @@ import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { execSync } from 'child_process';
+import { reloadPhrases } from './gameManager.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -108,6 +109,9 @@ async function downloadPhrases() {
 
     // Sauvegarder les nouvelles phrases
     writeFileSync(PHRASES_PATH, JSON.stringify(newPhrases, null, 2), 'utf-8');
+
+    // Recharger en mémoire
+    reloadPhrases();
 
     console.log(`Phrases updated successfully: ${newPhrases.fr.length} FR, ${newPhrases.en.length} EN`);
     return true;

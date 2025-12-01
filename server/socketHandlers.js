@@ -100,6 +100,7 @@ export function setupSocketHandlers(io) {
       socket.join(roomId);
 
       const room = result.room;
+      const playersList = getPlayersInRoom(roomId); // Cache pour éviter les appels multiples
       const joinData = {
         room: {
           id: room.id,
@@ -109,7 +110,7 @@ export function setupSocketHandlers(io) {
           hasPassword: !!room.password,
           gameState: room.gameState
         },
-        players: getPlayersInRoom(roomId),
+        players: playersList,
         isManager: false
       };
 
@@ -142,7 +143,7 @@ export function setupSocketHandlers(io) {
 
       socket.to(roomId).emit('room:player-joined', {
         player: room.players.get(socket.id),
-        players: getPlayersInRoom(roomId)
+        players: playersList
       });
 
       io.emit('room:list-update', getAllRooms());
