@@ -207,9 +207,6 @@ onUnmounted(() => {
             <button class="btn-secondary" @click="skipRound">
               Passer
             </button>
-            <button class="btn-danger" @click="endGame">
-              Terminer la partie
-            </button>
           </div>
         </template>
       </div>
@@ -218,6 +215,9 @@ onUnmounted(() => {
         <ScoreBoard :players="store.players" :currentGuesserId="store.currentRound?.guesserId" />
         <button class="btn-leave" @click="handleLeaveRoom">
           Quitter la partie
+        </button>
+        <button v-if="store.isManager" class="btn-end-game" @click="endGame">
+          Terminer la partie
         </button>
       </div>
     </div>
@@ -442,6 +442,24 @@ onUnmounted(() => {
   background: rgba(255, 100, 100, 0.1);
   border-color: rgba(255, 100, 100, 0.8);
   color: #ff6464;
+}
+
+.btn-end-game {
+  width: 100%;
+  padding: 0.75rem;
+  background: rgba(255, 100, 100, 0.2);
+  border: 1px solid rgba(255, 100, 100, 0.5);
+  color: #ff6464;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.btn-end-game:hover {
+  background: rgba(255, 100, 100, 0.3);
+  border-color: rgba(255, 100, 100, 0.8);
 }
 
 .modal-overlay {
