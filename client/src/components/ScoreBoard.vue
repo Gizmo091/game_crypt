@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useSocket } from '../composables/useSocket'
 
-const { getSocketId } = useSocket()
+const { socketId } = useSocket()
 
 const props = defineProps({
   players: {
@@ -14,8 +14,6 @@ const props = defineProps({
     default: null
   }
 })
-
-const myId = computed(() => getSocketId())
 
 const sortedPlayers = computed(() => {
   return [...props.players].sort((a, b) => b.score - a.score)
@@ -33,13 +31,13 @@ const sortedPlayers = computed(() => {
         :class="{
           first: index === 0 && player.score > 0,
           guesser: player.id === currentGuesserId,
-          me: player.id === myId
+          me: player.id === socketId
         }"
       >
         <div class="player-info">
           <span class="rank">{{ index + 1 }}</span>
           <span class="name">{{ player.name }}</span>
-          <span v-if="player.id === myId" class="me-badge" title="C'est vous">👤</span>
+          <span v-if="player.id === socketId" class="me-badge" title="C'est vous">👤</span>
           <span v-if="player.isManager" class="manager-icon" title="Manager">⭐</span>
           <span v-if="player.id === currentGuesserId" class="guesser-badge" title="Devine">🎯</span>
         </div>

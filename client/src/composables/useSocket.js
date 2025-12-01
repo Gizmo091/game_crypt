@@ -1,9 +1,10 @@
-import { ref } from 'vue'
+import { ref, shallowRef } from 'vue'
 import { io } from 'socket.io-client'
 
-const socket = ref(null)
+const socket = shallowRef(null) // shallowRef pour éviter la réactivité profonde
 const isConnected = ref(false)
-const rooms = ref([])
+const rooms = shallowRef([]) // shallowRef pour les rooms aussi
+const socketId = ref(null) // Stocker l'ID séparément
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:4174'
 
@@ -18,16 +19,21 @@ export function useSocket() {
 
     socket.value.on('connect', () => {
       isConnected.value = true
+      socketId.value = socket.value.id // Stocker l'ID une seule fois
       console.log('Connected to server')
     })
 
     socket.value.on('disconnect', () => {
       isConnected.value = false
+      socketId.value = null
       console.log('Disconnected from server')
     })
 
     socket.value.on('room:list-update', (roomList) => {
-      rooms.value = roomList
+      // Éviter les mises à jour si les données sont identiques
+      if (JSON.stringify(rooms.value) !== JSON.stringify(roomList)) {
+        rooms.value = roomList
+      }
     })
   }
 
@@ -98,13 +104,14 @@ export function useSocket() {
   }
 
   function getSocketId() {
-    return socket.value?.id
+    return socketId.value
   }
 
   return {
     socket,
     isConnected,
     rooms,
+    socketId,
     connect,
     disconnect,
     emit,

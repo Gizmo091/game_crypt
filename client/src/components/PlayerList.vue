@@ -1,8 +1,7 @@
 <script setup>
-import { computed } from 'vue'
 import { useSocket } from '../composables/useSocket'
 
-const { getSocketId } = useSocket()
+const { socketId } = useSocket()
 
 defineProps({
   players: {
@@ -10,8 +9,6 @@ defineProps({
     default: () => []
   }
 })
-
-const myId = computed(() => getSocketId())
 </script>
 
 <template>
@@ -20,10 +17,10 @@ const myId = computed(() => getSocketId())
       v-for="player in players"
       :key="player.id"
       class="player-item"
-      :class="{ manager: player.isManager, me: player.id === myId }"
+      :class="{ manager: player.isManager, me: player.id === socketId }"
     >
       <div class="player-info">
-        <span v-if="player.id === myId" class="me-badge" title="C'est vous">👤</span>
+        <span v-if="player.id === socketId" class="me-badge" title="C'est vous">👤</span>
         <span v-if="player.isManager" class="manager-badge" title="Manager">⭐</span>
         <span class="player-name">{{ player.name }}</span>
       </div>
