@@ -1,20 +1,19 @@
 // Statistiques du serveur
 const stats = {
-  connectedPlayers: 0,
   maxConnectedPlayers: 0,
   totalGamesPlayed: 0
 };
 
-export function incrementConnectedPlayers() {
-  stats.connectedPlayers++;
-  if (stats.connectedPlayers > stats.maxConnectedPlayers) {
-    stats.maxConnectedPlayers = stats.connectedPlayers;
-  }
+// Référence à l'instance io pour compter les connexions réelles
+let ioInstance = null;
+
+export function setIoInstance(io) {
+  ioInstance = io;
 }
 
-export function decrementConnectedPlayers() {
-  if (stats.connectedPlayers > 0) {
-    stats.connectedPlayers--;
+export function updateMaxConnected(currentCount) {
+  if (currentCount > stats.maxConnectedPlayers) {
+    stats.maxConnectedPlayers = currentCount;
   }
 }
 
@@ -23,5 +22,15 @@ export function incrementGamesPlayed() {
 }
 
 export function getStats() {
-  return { ...stats };
+  // Utiliser le vrai compteur de Socket.io
+  const connectedPlayers = ioInstance ? ioInstance.engine.clientsCount : 0;
+
+  // Mettre à jour le max si nécessaire
+  updateMaxConnected(connectedPlayers);
+
+  return {
+    connectedPlayers,
+    maxConnectedPlayers: stats.maxConnectedPlayers,
+    totalGamesPlayed: stats.totalGamesPlayed
+  };
 }

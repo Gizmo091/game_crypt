@@ -1,7 +1,7 @@
 services:
   server:
     image: node:20-alpine
-    working_dir: /app
+    working_dir: /
     ports:
       - "${SERVER_PORT:-4174}:4174"
     environment:
@@ -11,6 +11,7 @@ services:
       - GITHUB_REPO_URL=${GITHUB_REPO_URL:-}
     command: >
       sh -c "
+        rm -rf /app && mkdir -p /app
         apk add --no-cache git &&
         git clone --depth 1 --branch ${BRANCH:-main} ${REPO_URL:-https://github.com/Gizmo091/game_crypt.git} /app &&
         cd /app/server &&
@@ -21,7 +22,7 @@ services:
 
   client:
     image: node:20-alpine
-    working_dir: /app
+    working_dir: /
     ports:
       - "4173:${VITE_PORT:-4173}"
     environment:
@@ -30,6 +31,7 @@ services:
       - VITE_PORT=${VITE_PORT:-4173}
     command: >
       sh -c "
+        rm -rf /app && mkdir -p /app
         apk add --no-cache git &&
         git clone --depth 1 --branch ${BRANCH:-main} ${REPO_URL:-https://github.com/Gizmo091/game_crypt.git} /app &&
         cd /app/client &&

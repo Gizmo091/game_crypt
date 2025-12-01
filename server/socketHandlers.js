@@ -21,8 +21,7 @@ import {
 } from './gameManager.js';
 
 import {
-  incrementConnectedPlayers,
-  decrementConnectedPlayers,
+  setIoInstance,
   getStats
 } from './statsManager.js';
 
@@ -38,6 +37,9 @@ function broadcastStats(io) {
 }
 
 export function setupSocketHandlers(io) {
+  // Enregistrer l'instance io pour les stats
+  setIoInstance(io);
+
   // Démarrer le broadcast périodique des stats
   if (!statsInterval) {
     statsInterval = setInterval(() => broadcastStats(io), 10000);
@@ -46,11 +48,12 @@ export function setupSocketHandlers(io) {
   io.on('connection', (socket) => {
     console.log(`Player connected: ${socket.id}`);
 
-    // Incrémenter le compteur de joueurs connectés
-    incrementConnectedPlayers();
+    // Envoyer les stats au nouveau connecté (avec un petit délai pour que le compteur soit à jour)
+    setTimeout(() => {
+      socket.emit('stats:update', getStats());
+      broadcastStats(io);
+    }, 100);
 
-    // Envoyer les stats au nouveau connecté
-    socket.emit('stats:update', getStats());
     socket.emit('room:list-update', getAllRooms());
 
     socket.on('room:list', () => {
@@ -270,10 +273,8 @@ export function setupSocketHandlers(io) {
 
     socket.on('disconnect', () => {
       console.log(`Player disconnected: ${socket.id}`);
-      // Décrémenter le compteur de joueurs connectés
-      decrementConnectedPlayers();
-      // Broadcast des stats mises à jour
-      broadcastStats(io);
+      // Broadcast des stats mises à jour (avec délai pour que le compteur soit à jour)
+      setTimeout(() => broadcastStats(io), 100);
       // Déconnexion = délai de grâce avant suppression
       handlePlayerDisconnect(socket, io);
     });

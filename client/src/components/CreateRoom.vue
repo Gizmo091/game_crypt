@@ -60,6 +60,7 @@ function handleClose() {
           v-model="roomName"
           placeholder="Mon salon..."
           maxlength="30"
+          @keyup.enter="handleCreate"
         />
       </div>
 
