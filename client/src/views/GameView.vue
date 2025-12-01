@@ -174,11 +174,16 @@ onUnmounted(() => {
             <div
               class="phrase-container card original-phrase"
               :class="{ revealed: showOriginalPhrase }"
-              @click="showOriginalPhrase = true"
+              @mousedown="showOriginalPhrase = true"
+              @mouseup="showOriginalPhrase = false"
+              @mouseleave="showOriginalPhrase = false"
+              @touchstart.prevent="showOriginalPhrase = true"
+              @touchend="showOriginalPhrase = false"
+              @touchcancel="showOriginalPhrase = false"
             >
               <h3>Phrase originale (la réponse)</h3>
               <p class="phrase" v-if="showOriginalPhrase">{{ store.phrase }}</p>
-              <p class="phrase-hidden" v-else>Toucher pour révéler</p>
+              <p class="phrase-hidden" v-else>Maintenir appuyé pour révéler</p>
             </div>
           </template>
 
@@ -302,6 +307,9 @@ onUnmounted(() => {
   background: rgba(255, 100, 100, 0.1);
   border: 2px dashed rgba(255, 100, 100, 0.3);
   transition: all 0.3s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .original-phrase:not(.revealed):hover {
