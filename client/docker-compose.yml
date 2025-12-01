@@ -1,0 +1,18 @@
+services:
+  client:
+    image: node:20-alpine
+    working_dir: /app/client
+    ports:
+        - "4173:4173"
+    environment:
+      - VITE_SERVER_URL=${VITE_SERVER_URL:-http://localhost:3001}
+    command: >
+      sh -c "
+        apk add --no-cache git &&
+        git clone --depth 1 --branch ${BRANCH:-main} ${REPO_URL:-https://github.com/Gizmo091/game_crypt.git} /app &&
+        cd /app/client &&
+        npm ci &&
+        npm run build &&
+        npm run preview -- --host 0.0.0.0 --port 4173
+      "
+    restart: unless-stopped

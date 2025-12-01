@@ -1,0 +1,20 @@
+services:
+  server:
+    image: node:20-alpine
+    working_dir: /app/server
+    ports:
+      - "4174:4174"
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - PORT=4174
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:4173,http://localhost:4174}
+      - GITHUB_REPO_URL=${GITHUB_REPO_URL:-}
+    command: >
+      sh -c "
+        apk add --no-cache git &&
+        git clone --depth 1 --branch ${BRANCH:-main} ${REPO_URL:-https://github.com/Gizmo091/game_crypt.git} /app &&
+        cd /app/server &&
+        npm ci --only=production &&
+        npm start
+      "
+    restart: unless-stopped

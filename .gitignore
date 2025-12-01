@@ -27,6 +27,9 @@ dist/
 build/
 *.log
 
+# Vite
+*.local
+
 # Cache
 .cache/
 *.cache
