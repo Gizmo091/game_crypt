@@ -1,11 +1,25 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
+// Générer un UUID (avec fallback pour contextes non-HTTPS)
+function generateUUID() {
+  // crypto.randomUUID n'est disponible qu'en contexte sécurisé (HTTPS/localhost)
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+  // Fallback pour HTTP
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = Math.random() * 16 | 0
+    const v = c === 'x' ? r : (r & 0x3 | 0x8)
+    return v.toString(16)
+  })
+}
+
 // Générer ou récupérer un sessionId unique
 function getOrCreateSessionId() {
   let sessionId = localStorage.getItem('sessionId')
   if (!sessionId) {
-    sessionId = crypto.randomUUID()
+    sessionId = generateUUID()
     localStorage.setItem('sessionId', sessionId)
   }
   return sessionId

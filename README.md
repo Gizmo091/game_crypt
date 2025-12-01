@@ -2,6 +2,8 @@
 
 Un jeu multijoueur en temps réel où les joueurs doivent deviner des phrases à partir de leur prononciation codée.
 
+**Démo en ligne : [codedwords.vedie.fr](https://codedwords.vedie.fr/)**
+
 ## Le concept
 
 Le devineur voit une phrase codée (ex: "Lait petit quai sous haie") et doit la prononcer à voix haute. Les autres joueurs entendent cette phrase et connaissent la réponse originale (ex: "Les petits cailloux"). Ils doivent aider le devineur en mimant, dessinant ou donnant des indices - sans prononcer les mots de la réponse !
