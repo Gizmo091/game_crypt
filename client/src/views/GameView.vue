@@ -151,9 +151,6 @@ onUnmounted(() => {
               <button class="btn-primary btn-large" @click="handleNextRound">
                 Manche suivante
               </button>
-              <button class="btn-danger" @click="endGame">
-                Terminer la partie
-              </button>
             </div>
             <div class="waiting-message" v-else>
               <p>En attente du manager...</p>
