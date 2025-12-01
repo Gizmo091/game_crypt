@@ -17,6 +17,7 @@ const winner = ref(null)
 const lastPhrase = ref(null)
 const betweenRounds = ref(false)
 const nextGuesser = ref(null)
+const showOriginalPhrase = ref(false)
 
 const guesserName = computed(() => {
   if (!store.currentRound) return ''
@@ -28,6 +29,7 @@ function handleRound(data) {
   store.setRound(data)
   betweenRounds.value = false
   nextGuesser.value = null
+  showOriginalPhrase.value = false
 }
 
 function handleTimer(data) {
@@ -82,6 +84,18 @@ onMounted(() => {
       const session = store.getSavedSession()
       if (!session || session.roomId !== route.params.roomId) {
         router.push('/')
+      }
+    } else {
+      // Si on rejoint pendant "between_rounds", afficher l'écran intermédiaire
+      if (store.gameState === 'between_rounds') {
+        betweenRounds.value = true
+        // Récupérer les valeurs depuis le store si on rejoint en cours de partie
+        if (store.lastPhrase) {
+          lastPhrase.value = store.lastPhrase
+        }
+        if (store.nextGuesser) {
+          nextGuesser.value = store.nextGuesser
+        }
       }
     }
   }, 500)
@@ -144,10 +158,29 @@ onUnmounted(() => {
             <strong>{{ guesserName }}</strong> doit deviner
           </div>
 
-          <div class="phrase-container card">
-            <h3>{{ store.isGuesser ? 'Phrase codée' : 'Phrase originale' }}</h3>
+          <!-- Affichage pour le devineur -->
+          <div class="phrase-container card" v-if="store.isGuesser">
+            <h3>Phrase codée</h3>
             <p class="phrase">{{ store.phrase }}</p>
           </div>
+
+          <!-- Affichage pour les autres joueurs -->
+          <template v-else>
+            <div class="phrase-container card">
+              <h3>Phrase codée (ce qu'il prononce)</h3>
+              <p class="phrase">{{ store.codedPhrase }}</p>
+            </div>
+
+            <div
+              class="phrase-container card original-phrase"
+              :class="{ revealed: showOriginalPhrase }"
+              @click="showOriginalPhrase = true"
+            >
+              <h3>Phrase originale (la réponse)</h3>
+              <p class="phrase" v-if="showOriginalPhrase">{{ store.phrase }}</p>
+              <p class="phrase-hidden" v-else>Toucher pour révéler</p>
+            </div>
+          </template>
 
           <div class="manager-controls" v-if="store.isManager">
             <button class="btn-success" @click="validatePoint">
@@ -262,6 +295,32 @@ onUnmounted(() => {
   line-height: 1.4;
   color: white;
   margin: 0;
+}
+
+.original-phrase {
+  cursor: pointer;
+  background: rgba(255, 100, 100, 0.1);
+  border: 2px dashed rgba(255, 100, 100, 0.3);
+  transition: all 0.3s ease;
+}
+
+.original-phrase:not(.revealed):hover {
+  background: rgba(255, 100, 100, 0.2);
+  border-color: rgba(255, 100, 100, 0.5);
+}
+
+.original-phrase.revealed {
+  cursor: default;
+  background: rgba(56, 239, 125, 0.1);
+  border: 2px solid rgba(56, 239, 125, 0.3);
+}
+
+.phrase-hidden {
+  font-size: 1.2rem;
+  color: rgba(255, 100, 100, 0.7);
+  font-style: italic;
+  margin: 0;
+  padding: 1rem 0;
 }
 
 .between-rounds {

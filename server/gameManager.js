@@ -26,7 +26,11 @@ export function startGame(roomId, io) {
   room.usedPhraseIndices = [];
 
   const players = Array.from(room.players.values());
-  players.forEach(p => p.score = 0);
+  players.forEach(p => {
+    p.score = 0;
+    p.roundsAsGuesser = 0;
+    p.consecutiveGuesserRounds = 0;
+  });
 
   return startNewRound(roomId, io);
 }
@@ -35,16 +39,29 @@ export function startNewRound(roomId, io) {
   const room = getRoom(roomId);
   if (!room) return { success: false, error: 'Room not found' };
 
-  const players = Array.from(room.players.values());
-  const playerIds = players.map(p => p.id);
+  const previousGuesserId = room.currentRound?.guesserId;
 
-  let guesserIndex = 0;
-  if (room.currentRound) {
-    const currentGuesserIndex = playerIds.indexOf(room.currentRound.guesserId);
-    guesserIndex = (currentGuesserIndex + 1) % playerIds.length;
-  }
+  // Sélectionner le prochain guesser avec la nouvelle logique
+  const nextGuesser = getNextGuesser(room);
+  if (!nextGuesser) return { success: false, error: 'No players available' };
 
-  const guesserId = playerIds[guesserIndex];
+  const guesserId = nextGuesser.id;
+
+  // Mettre à jour les compteurs de manches
+  room.players.forEach((player, playerId) => {
+    if (playerId === guesserId) {
+      // Ce joueur devient le guesser
+      player.roundsAsGuesser = (player.roundsAsGuesser || 0) + 1;
+      if (playerId === previousGuesserId) {
+        player.consecutiveGuesserRounds = (player.consecutiveGuesserRounds || 0) + 1;
+      } else {
+        player.consecutiveGuesserRounds = 1;
+      }
+    } else {
+      // Réinitialiser le compteur consécutif pour les autres
+      player.consecutiveGuesserRounds = 0;
+    }
+  });
 
   const languagePhrases = phrases[room.language] || phrases['fr'];
   const availableIndices = languagePhrases
@@ -145,17 +162,41 @@ export function skipRound(roomId, io) {
 
 function getNextGuesser(room) {
   const players = Array.from(room.players.values());
-  const playerIds = players.map(p => p.id);
+  if (players.length === 0) return null;
 
-  let guesserIndex = 0;
-  if (room.currentRound) {
-    const currentGuesserIndex = playerIds.indexOf(room.currentRound.guesserId);
-    guesserIndex = (currentGuesserIndex + 1) % playerIds.length;
+  const currentGuesserId = room.currentRound?.guesserId;
+
+  // Trouver le joueur avec le moins de manches jouées comme devineur
+  // En cas d'égalité, suivre l'ordre de joinedAt (round-robin)
+  // Ne pas dépasser 2 manches consécutives
+
+  // Trier par : 1) roundsAsGuesser (asc), 2) joinedAt (asc)
+  const sortedPlayers = [...players].sort((a, b) => {
+    const aRounds = a.roundsAsGuesser || 0;
+    const bRounds = b.roundsAsGuesser || 0;
+    if (aRounds !== bRounds) return aRounds - bRounds;
+    return a.joinedAt - b.joinedAt;
+  });
+
+  // Filtrer les joueurs qui peuvent être guesser (pas plus de 2 consécutives)
+  const eligiblePlayers = sortedPlayers.filter(p => {
+    // Si c'est le guesser actuel, vérifier s'il peut continuer
+    if (p.id === currentGuesserId) {
+      return (p.consecutiveGuesserRounds || 0) < 2;
+    }
+    return true;
+  });
+
+  // Prendre le premier éligible avec le moins de manches
+  if (eligiblePlayers.length > 0) {
+    const minRounds = eligiblePlayers[0].roundsAsGuesser || 0;
+    // Parmi ceux qui ont le minimum, prendre le premier par joinedAt
+    const candidates = eligiblePlayers.filter(p => (p.roundsAsGuesser || 0) === minRounds);
+    return candidates[0];
   }
 
-  const nextGuesserId = playerIds[guesserIndex];
-  const nextGuesser = players.find(p => p.id === nextGuesserId);
-  return nextGuesser;
+  // Fallback : prendre le premier joueur
+  return players[0];
 }
 
 function endRound(roomId, io, guessed) {
@@ -204,12 +245,17 @@ function emitRoundStart(roomId, io, roundData) {
 
   room.players.forEach((player, playerId) => {
     const isGuesser = playerId === roundData.round.guesserId;
-    io.to(playerId).emit('game:round', {
+    const data = {
       guesserId: roundData.round.guesserId,
       timeRemaining: roundData.round.timeRemaining,
       phrase: isGuesser ? roundData.phrase.coded : roundData.phrase.original,
       isGuesser
-    });
+    };
+    // Les non-devieurs voient aussi la phrase codée pour mieux aider
+    if (!isGuesser) {
+      data.codedPhrase = roundData.phrase.coded;
+    }
+    io.to(playerId).emit('game:round', data);
   });
 }
 

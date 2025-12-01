@@ -20,8 +20,11 @@ export const useGameStore = defineStore('game', () => {
   const gameState = ref('waiting')
   const currentRound = ref(null)
   const phrase = ref('')
+  const codedPhrase = ref('')
   const isGuesser = ref(false)
   const timeRemaining = ref(0)
+  const lastPhrase = ref(null)
+  const nextGuesser = ref(null)
 
   const currentPlayer = computed(() => {
     return players.value.find(p => p.isManager === isManager.value)
@@ -53,6 +56,7 @@ export const useGameStore = defineStore('game', () => {
   function setRound(round) {
     currentRound.value = round
     phrase.value = round.phrase
+    codedPhrase.value = round.codedPhrase || ''
     isGuesser.value = round.isGuesser
     timeRemaining.value = round.timeRemaining
   }
@@ -63,6 +67,14 @@ export const useGameStore = defineStore('game', () => {
 
   function updatePlayerScores(newPlayers) {
     players.value = newPlayers
+  }
+
+  function setLastPhrase(phrase) {
+    lastPhrase.value = phrase
+  }
+
+  function setNextGuesser(guesser) {
+    nextGuesser.value = guesser
   }
 
   function saveSession() {
@@ -92,8 +104,11 @@ export const useGameStore = defineStore('game', () => {
     gameState.value = 'waiting'
     currentRound.value = null
     phrase.value = ''
+    codedPhrase.value = ''
     isGuesser.value = false
     timeRemaining.value = 0
+    lastPhrase.value = null
+    nextGuesser.value = null
     clearSession()
   }
 
@@ -106,8 +121,11 @@ export const useGameStore = defineStore('game', () => {
     gameState,
     currentRound,
     phrase,
+    codedPhrase,
     isGuesser,
     timeRemaining,
+    lastPhrase,
+    nextGuesser,
     currentPlayer,
     setPlayerName,
     setRoom,
@@ -117,6 +135,8 @@ export const useGameStore = defineStore('game', () => {
     setRound,
     setTimeRemaining,
     updatePlayerScores,
+    setLastPhrase,
+    setNextGuesser,
     getSavedSession,
     clearSession,
     reset

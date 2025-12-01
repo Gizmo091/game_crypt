@@ -28,7 +28,22 @@ function handleRoomJoined(data) {
   store.setRoom(data.room)
   store.setPlayers(data.players)
   store.setManager(data.isManager)
-  router.push(`/lobby/${data.room.id}`)
+  store.setGameState(data.room.gameState)
+
+  // Si une partie est en cours, aller directement dans le jeu
+  if (data.currentRound) {
+    store.setRound(data.currentRound)
+    // Stocker les infos supplémentaires pour between_rounds
+    if (data.lastPhrase) {
+      store.setLastPhrase(data.lastPhrase)
+    }
+    if (data.nextGuesser) {
+      store.setNextGuesser(data.nextGuesser)
+    }
+    router.push(`/game/${data.room.id}`)
+  } else {
+    router.push(`/lobby/${data.room.id}`)
+  }
 }
 
 function handleError(data) {

@@ -23,7 +23,9 @@ export function createRoom({ name, password, language, roundTime, managerId, man
     sessionId: sessionId,
     score: 0,
     isManager: true,
-    joinedAt: Date.now()
+    joinedAt: Date.now(),
+    roundsAsGuesser: 0,
+    consecutiveGuesserRounds: 0
   });
 
   rooms.set(id, room);
@@ -72,7 +74,9 @@ export function joinRoom(roomId, playerId, playerName, password, sessionId) {
     sessionId: sessionId,
     score: 0,
     isManager: false,
-    joinedAt: Date.now()
+    joinedAt: Date.now(),
+    roundsAsGuesser: 0, // Commence à 0 pour rattraper les autres
+    consecutiveGuesserRounds: 0
   });
 
   return { success: true, room };
@@ -227,7 +231,9 @@ export function rejoinRoom(roomId, newSocketId, playerName, sessionId) {
       sessionId: sessionId,
       score: 0,
       isManager: false,
-      joinedAt: Date.now()
+      joinedAt: Date.now(),
+      roundsAsGuesser: 0, // Commence à 0 pour rattraper les autres
+      consecutiveGuesserRounds: 0
     };
     room.players.set(newSocketId, newPlayer);
 

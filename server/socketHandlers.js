@@ -100,7 +100,7 @@ export function setupSocketHandlers(io) {
       socket.join(roomId);
 
       const room = result.room;
-      socket.emit('room:joined', {
+      const joinData = {
         room: {
           id: room.id,
           name: room.name,
@@ -111,7 +111,34 @@ export function setupSocketHandlers(io) {
         },
         players: getPlayersInRoom(roomId),
         isManager: false
-      });
+      };
+
+      // Si une partie est en cours, envoyer les infos de la manche
+      if ((room.gameState === 'playing' || room.gameState === 'between_rounds') && room.currentRound) {
+        joinData.currentRound = {
+          guesserId: room.currentRound.guesserId,
+          timeRemaining: room.currentRound.timeRemaining,
+          phrase: room.currentRound.phrase.original, // Le nouveau joueur n'est jamais le guesser
+          codedPhrase: room.currentRound.phrase.coded, // La phrase codée pour aider
+          isGuesser: false
+        };
+
+        // Si entre les manches, envoyer aussi la phrase précédente et le prochain guesser
+        if (room.gameState === 'between_rounds') {
+          joinData.lastPhrase = room.currentRound.phrase;
+          // Calculer le prochain guesser
+          const players = Array.from(room.players.values());
+          const playerIds = players.map(p => p.id);
+          const currentGuesserIndex = playerIds.indexOf(room.currentRound.guesserId);
+          const nextGuesserIndex = (currentGuesserIndex + 1) % playerIds.length;
+          const nextGuesser = players[nextGuesserIndex];
+          if (nextGuesser) {
+            joinData.nextGuesser = { id: nextGuesser.id, name: nextGuesser.name };
+          }
+        }
+      }
+
+      socket.emit('room:joined', joinData);
 
       socket.to(roomId).emit('room:player-joined', {
         player: room.players.get(socket.id),
@@ -207,12 +234,17 @@ export function setupSocketHandlers(io) {
 
       room.players.forEach((player, playerId) => {
         const isGuesser = playerId === result.round.guesserId;
-        io.to(playerId).emit('game:round', {
+        const roundData = {
           guesserId: result.round.guesserId,
           timeRemaining: result.round.timeRemaining,
           phrase: isGuesser ? result.phrase.coded : result.phrase.original,
           isGuesser
-        });
+        };
+        // Les non-devieurs voient aussi la phrase codée pour mieux aider
+        if (!isGuesser) {
+          roundData.codedPhrase = result.phrase.coded;
+        }
+        io.to(playerId).emit('game:round', roundData);
       });
 
       io.emit('room:list-update', getAllRooms());
