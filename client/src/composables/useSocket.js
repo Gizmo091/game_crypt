@@ -1,65 +1,69 @@
-import { ref, shallowRef } from 'vue'
+import { ref } from 'vue'
 import { io } from 'socket.io-client'
 
-const socket = shallowRef(null) // shallowRef pour éviter la réactivité profonde
+let socketInstance = null // Socket hors réactivité Vue
 const isConnected = ref(false)
-const rooms = shallowRef([]) // shallowRef pour les rooms aussi
-const socketId = ref(null) // Stocker l'ID séparément
+const rooms = ref([])
+const socketId = ref(null)
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:4174'
 
 export function useSocket() {
   function connect() {
-    if (socket.value?.connected) return
+    // Éviter les connexions multiples
+    if (socketInstance?.connected) return
+    if (socketInstance) {
+      socketInstance.removeAllListeners()
+      socketInstance.disconnect()
+    }
 
-    socket.value = io(SERVER_URL, {
+    socketInstance = io(SERVER_URL, {
       transports: ['websocket', 'polling'],
       withCredentials: true
     })
 
-    socket.value.on('connect', () => {
+    socketInstance.on('connect', () => {
       isConnected.value = true
-      socketId.value = socket.value.id // Stocker l'ID une seule fois
+      socketId.value = socketInstance.id
       console.log('Connected to server')
     })
 
-    socket.value.on('disconnect', () => {
+    socketInstance.on('disconnect', () => {
       isConnected.value = false
       socketId.value = null
       console.log('Disconnected from server')
     })
 
-    socket.value.on('room:list-update', (roomList) => {
-      // Éviter les mises à jour si les données sont identiques
-      if (JSON.stringify(rooms.value) !== JSON.stringify(roomList)) {
-        rooms.value = roomList
-      }
+    socketInstance.on('room:list-update', (roomList) => {
+      rooms.value = roomList
     })
   }
 
   function disconnect() {
-    if (socket.value) {
-      socket.value.disconnect()
-      socket.value = null
+    if (socketInstance) {
+      socketInstance.removeAllListeners()
+      socketInstance.disconnect()
+      socketInstance = null
       isConnected.value = false
+      socketId.value = null
     }
   }
 
   function emit(event, data) {
-    if (socket.value) {
-      socket.value.emit(event, data)
+    if (socketInstance) {
+      socketInstance.emit(event, data)
     }
   }
 
   function on(event, callback) {
-    if (socket.value) {
-      socket.value.on(event, callback)
+    if (socketInstance) {
+      socketInstance.on(event, callback)
     }
   }
 
   function off(event, callback) {
-    if (socket.value) {
-      socket.value.off(event, callback)
+    if (socketInstance) {
+      socketInstance.off(event, callback)
     }
   }
 
@@ -108,7 +112,6 @@ export function useSocket() {
   }
 
   return {
-    socket,
     isConnected,
     rooms,
     socketId,
