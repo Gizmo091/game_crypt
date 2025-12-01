@@ -2,6 +2,8 @@ services:
   server:
     image: node:20-alpine
     working_dir: /
+    init: true
+    stop_grace_period: 3s
     ports:
       - "${SERVER_PORT:-4174}:4174"
     environment:
@@ -16,13 +18,15 @@ services:
         git clone --depth 1 --branch ${BRANCH:-main} ${REPO_URL:-https://github.com/Gizmo091/game_crypt.git} /app &&
         cd /app/server &&
         npm ci --only=production &&
-        npm start
+        exec node index.js
       "
     restart: unless-stopped
 
   client:
     image: node:20-alpine
     working_dir: /
+    init: true
+    stop_grace_period: 3s
     ports:
       - "4173:${VITE_PORT:-4173}"
     environment:
@@ -37,7 +41,7 @@ services:
         cd /app/client &&
         npm ci &&
         npm run build &&
-        npm run preview -- --host 0.0.0.0 --port ${VITE_PORT:-4173}
+        exec npm run preview -- --host 0.0.0.0 --port ${VITE_PORT:-4173}
       "
     depends_on:
       - server

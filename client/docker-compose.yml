@@ -2,6 +2,8 @@ services:
   client:
     image: node:20-alpine
     working_dir: /
+    init: true
+    stop_grace_period: 3s
     ports:
       - "4173:${VITE_PORT:-4173}"
     environment:
@@ -16,6 +18,6 @@ services:
         cd /app/client &&
         npm ci &&
         npm run build &&
-        npm run preview -- --host 0.0.0.0 --port ${VITE_PORT:-4173}
+        exec npm run preview -- --host 0.0.0.0 --port ${VITE_PORT:-4173}
       "
     restart: unless-stopped
