@@ -9,7 +9,7 @@ import ScoreBoard from '../components/ScoreBoard.vue'
 const router = useRouter()
 const route = useRoute()
 const store = useGameStore()
-const { on, off, leaveRoom, validatePoint, skipRound, nextRound, endGame } = useSocket()
+const { on, off, leaveRoom, validatePoint, skipRound, nextRound, endGame, socketId } = useSocket()
 
 const isLoading = ref(true)
 const showEndModal = ref(false)
@@ -57,6 +57,15 @@ function handleGameEnded(data) {
   showEndModal.value = true
 }
 
+function handlePlayerLeft(data) {
+  store.setPlayers(data.players)
+}
+
+function handleManagerChanged(data) {
+  store.setPlayers(data.players)
+  store.setManager(data.newManagerId === socketId.value)
+}
+
 function handleLeaveRoom() {
   leaveRoom()
   store.reset()
@@ -75,6 +84,8 @@ onMounted(() => {
   on('game:point-awarded', handlePointAwarded)
   on('game:round-end', handleRoundEnd)
   on('game:ended', handleGameEnded)
+  on('room:player-left', handlePlayerLeft)
+  on('room:manager-changed', handleManagerChanged)
 
   // Attendre un peu pour laisser le temps à la reconnexion
   setTimeout(() => {
@@ -107,6 +118,8 @@ onUnmounted(() => {
   off('game:point-awarded', handlePointAwarded)
   off('game:round-end', handleRoundEnd)
   off('game:ended', handleGameEnded)
+  off('room:player-left', handlePlayerLeft)
+  off('room:manager-changed', handleManagerChanged)
 })
 </script>
 

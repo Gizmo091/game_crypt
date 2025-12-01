@@ -8,7 +8,7 @@ import PlayerList from '../components/PlayerList.vue'
 const router = useRouter()
 const route = useRoute()
 const store = useGameStore()
-const { on, off, leaveRoom, startGame } = useSocket()
+const { on, off, leaveRoom, startGame, socketId } = useSocket()
 
 const isLoading = ref(true)
 
@@ -26,8 +26,7 @@ function handlePlayerLeft(data) {
 
 function handleManagerChanged(data) {
   store.setPlayers(data.players)
-  const currentSocketId = store.players.find(p => p.isManager)?.id
-  store.setManager(data.newManagerId === currentSocketId)
+  store.setManager(data.newManagerId === socketId.value)
 }
 
 function handleGameStarted(data) {

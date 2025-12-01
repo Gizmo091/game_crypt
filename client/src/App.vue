@@ -48,6 +48,8 @@ function tryRejoin() {
   }
 }
 
+let checkInterval = null
+
 onMounted(() => {
   connect()
 
@@ -58,11 +60,12 @@ onMounted(() => {
   // Attendre que la connexion soit établie avant de tenter le rejoin
   let checkCount = 0
   const maxChecks = 30 // 3 secondes max
-  const checkConnection = setInterval(() => {
+  checkInterval = setInterval(() => {
     checkCount++
     const { isConnected } = useSocket()
     if (isConnected.value || checkCount >= maxChecks) {
-      clearInterval(checkConnection)
+      clearInterval(checkInterval)
+      checkInterval = null
       if (isConnected.value) {
         tryRejoin()
       }
@@ -71,6 +74,10 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  if (checkInterval) {
+    clearInterval(checkInterval)
+    checkInterval = null
+  }
   off('room:rejoined', handleRejoined)
   off('room:rejoin-failed', handleRejoinFailed)
   off('stats:update', handleStatsUpdate)
