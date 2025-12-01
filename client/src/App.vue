@@ -56,16 +56,18 @@ onMounted(() => {
   on('stats:update', handleStatsUpdate)
 
   // Attendre que la connexion soit établie avant de tenter le rejoin
+  let checkCount = 0
+  const maxChecks = 30 // 3 secondes max
   const checkConnection = setInterval(() => {
+    checkCount++
     const { isConnected } = useSocket()
-    if (isConnected.value) {
+    if (isConnected.value || checkCount >= maxChecks) {
       clearInterval(checkConnection)
-      tryRejoin()
+      if (isConnected.value) {
+        tryRejoin()
+      }
     }
   }, 100)
-
-  // Timeout après 3 secondes
-  setTimeout(() => clearInterval(checkConnection), 3000)
 })
 
 onUnmounted(() => {

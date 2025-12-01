@@ -192,6 +192,10 @@ export function setupSocketHandlers(io) {
           phrase: isGuesser ? room.currentRound.phrase.coded : room.currentRound.phrase.original,
           isGuesser
         };
+        // Les non-devieurs ont aussi besoin de la phrase codée
+        if (!isGuesser) {
+          roomData.currentRound.codedPhrase = room.currentRound.phrase.coded;
+        }
       }
 
       socket.emit('room:rejoined', roomData);
