@@ -5,7 +5,7 @@ const socket = ref(null)
 const isConnected = ref(false)
 const rooms = ref([])
 
-const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001'
+const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:4174'
 
 export function useSocket() {
   function connect() {

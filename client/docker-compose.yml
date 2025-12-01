@@ -3,9 +3,11 @@ services:
     image: node:20-alpine
     working_dir: /app/client
     ports:
-        - "4173:4173"
+        - "4173:${VITE_PORT:-4173}"
     environment:
-      - VITE_SERVER_URL=${VITE_SERVER_URL:-http://localhost:3001}
+      - VITE_SERVER_URL=${VITE_SERVER_URL:-http://localhost:4174}
+      - VITE_ALLOWED_HOST=${VITE_ALLOWED_HOST:-localhost}
+      - VITE_PORT=${VITE_PORT:-4173}
     command: >
       sh -c "
         apk add --no-cache git &&
@@ -13,6 +15,6 @@ services:
         cd /app/client &&
         npm ci &&
         npm run build &&
-        npm run preview -- --host 0.0.0.0 --port 4173
+        npm run preview -- --host 0.0.0.0 --port ${VITE_PORT:-4173}
       "
     restart: unless-stopped
