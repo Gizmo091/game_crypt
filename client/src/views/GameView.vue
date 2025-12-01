@@ -165,6 +165,9 @@ onUnmounted(() => {
 
       <div class="game-sidebar">
         <ScoreBoard :players="store.players" :currentGuesserId="store.currentRound?.guesserId" />
+        <button class="btn-leave" @click="handleLeaveRoom">
+          Quitter la partie
+        </button>
       </div>
     </div>
 
@@ -338,6 +341,27 @@ onUnmounted(() => {
 .game-sidebar {
   position: sticky;
   top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.btn-leave {
+  width: 100%;
+  padding: 0.75rem;
+  background: transparent;
+  border: 1px solid rgba(255, 100, 100, 0.5);
+  color: rgba(255, 100, 100, 0.8);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.btn-leave:hover {
+  background: rgba(255, 100, 100, 0.1);
+  border-color: rgba(255, 100, 100, 0.8);
+  color: #ff6464;
 }
 
 .modal-overlay {
