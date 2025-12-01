@@ -1,7 +1,7 @@
 services:
   server:
     image: node:20-alpine
-    working_dir: /app/server
+    working_dir: /app
     ports:
       - "${SERVER_PORT:-4174}:4174"
     environment:
@@ -21,7 +21,7 @@ services:
 
   client:
     image: node:20-alpine
-    working_dir: /app/client
+    working_dir: /app
     ports:
       - "4173:4173"
     environment:
