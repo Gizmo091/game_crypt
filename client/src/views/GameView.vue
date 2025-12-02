@@ -51,7 +51,11 @@ function handleRound(data) {
 }
 
 function handleTimer(data) {
-  store.setTimeRemaining(data.timeRemaining)
+  // Only use server timer if we don't have local calculation data
+  // This avoids conflicts between local and server timer updates
+  if (!store.roundStartedAt || !store.roundDuration) {
+    store.setTimeRemaining(data.timeRemaining)
+  }
 }
 
 function handlePointAwarded(data) {

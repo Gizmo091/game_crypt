@@ -265,6 +265,8 @@ export function setupSocketHandlers(io) {
         const roundData = {
           guesserId: result.round.guesserId,
           timeRemaining: result.round.timeRemaining,
+          roundStartedAt: room.currentRound.roundStartedAt,
+          roundDuration: room.currentRound.roundDuration,
           phrase: isGuesser ? result.phrase.coded : result.phrase.original,
           isGuesser
         };

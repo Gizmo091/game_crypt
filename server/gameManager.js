@@ -299,6 +299,8 @@ function emitRoundStart(roomId, io, roundData) {
     const data = {
       guesserId: roundData.round.guesserId,
       timeRemaining: roundData.round.timeRemaining,
+      roundStartedAt: room.currentRound.roundStartedAt,
+      roundDuration: room.currentRound.roundDuration,
       phrase: isGuesser ? roundData.phrase.coded : roundData.phrase.original,
       isGuesser
     };
