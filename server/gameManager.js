@@ -133,8 +133,14 @@ export function startNewRound(roomId, io) {
 
 export function getTimeRemaining(room) {
   if (!room.currentRound) return 0;
+  // Vérifier que les données nécessaires sont présentes
+  if (!room.currentRound.roundStartedAt || !room.currentRound.roundDuration) {
+    console.warn('[GameManager] Missing roundStartedAt or roundDuration, returning 0');
+    return 0;
+  }
   const elapsed = Math.floor((Date.now() - room.currentRound.roundStartedAt) / 1000);
-  return Math.max(0, room.currentRound.roundDuration - elapsed);
+  const remaining = Math.max(0, room.currentRound.roundDuration - elapsed);
+  return remaining;
 }
 
 function startTimer(roomId, io) {
@@ -351,6 +357,12 @@ export function restoreTimers(io) {
 
   for (const [roomId, room] of rooms.entries()) {
     if (room.gameState === 'playing' && room.currentRound) {
+      console.log(`[GameManager] Checking room ${roomId}:`, {
+        roundStartedAt: room.currentRound.roundStartedAt,
+        roundDuration: room.currentRound.roundDuration,
+        pointAwarded: room.currentRound.pointAwarded
+      });
+
       // Vérifier l'état incohérent : point déjà accordé mais jeu pas terminé
       if (room.currentRound.pointAwarded) {
         console.log(`[GameManager] Room ${roomId} has inconsistent state (pointAwarded=true but still playing), ending round`);
@@ -359,6 +371,7 @@ export function restoreTimers(io) {
       }
 
       const timeRemaining = getTimeRemaining(room);
+      console.log(`[GameManager] Room ${roomId} timeRemaining: ${timeRemaining}`);
 
       if (timeRemaining > 0) {
         console.log(`[GameManager] Restoring timer for room ${roomId} (${timeRemaining}s remaining)`);
