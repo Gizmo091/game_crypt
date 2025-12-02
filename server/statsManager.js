@@ -1,10 +1,18 @@
 import { getPhrasesCount } from './gameManager.js';
+import { saveStats, loadStats, isPersistenceEnabled } from './persistenceManager.js';
 
-// Statistiques du serveur
-const stats = {
-  maxConnectedPlayers: 0,
-  totalGamesPlayed: 0
-};
+// Charger les stats depuis le stockage persistant au démarrage
+const stats = loadStats();
+
+// Fonction pour sauvegarder après modification
+function persistStats() {
+  if (isPersistenceEnabled()) {
+    saveStats({
+      maxConnectedPlayers: stats.maxConnectedPlayers,
+      totalGamesPlayed: stats.totalGamesPlayed
+    });
+  }
+}
 
 // Référence à l'instance io pour compter les connexions réelles
 let ioInstance = null;
@@ -16,11 +24,13 @@ export function setIoInstance(io) {
 export function updateMaxConnected(currentCount) {
   if (currentCount > stats.maxConnectedPlayers) {
     stats.maxConnectedPlayers = currentCount;
+    persistStats();
   }
 }
 
 export function incrementGamesPlayed() {
   stats.totalGamesPlayed++;
+  persistStats();
 }
 
 export function getStats() {

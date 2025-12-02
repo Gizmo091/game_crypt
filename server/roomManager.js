@@ -1,6 +1,15 @@
 import { v4 as uuidv4 } from 'uuid';
+import { saveRooms, loadRooms, isPersistenceEnabled } from './persistenceManager.js';
 
-const rooms = new Map();
+// Charger les rooms depuis le stockage persistant au démarrage
+const rooms = loadRooms();
+
+// Fonction pour sauvegarder après modification
+function persistRooms() {
+  if (isPersistenceEnabled()) {
+    saveRooms(rooms);
+  }
+}
 
 export function createRoom({ name, password, language, roundTime, managerId, managerName, sessionId }) {
   const id = uuidv4();
@@ -29,6 +38,7 @@ export function createRoom({ name, password, language, roundTime, managerId, man
   });
 
   rooms.set(id, room);
+  persistRooms();
   return room;
 }
 
@@ -79,6 +89,7 @@ export function joinRoom(roomId, playerId, playerName, password, sessionId) {
     consecutiveGuesserRounds: 0
   });
 
+  persistRooms();
   return { success: true, room };
 }
 
@@ -91,6 +102,7 @@ export function leaveRoom(roomId, playerId) {
 
   if (room.players.size === 0) {
     rooms.delete(roomId);
+    persistRooms();
     return { success: true, roomDeleted: true };
   }
 
@@ -106,11 +118,13 @@ export function leaveRoom(roomId, playerId) {
     }
   }
 
+  persistRooms();
   return { success: true, roomDeleted: false, newManagerId };
 }
 
 export function deleteRoom(roomId) {
   rooms.delete(roomId);
+  persistRooms();
 }
 
 export function getPlayersInRoom(roomId) {
@@ -133,6 +147,7 @@ export function updateRoomState(roomId, updates) {
   if (!room) return null;
 
   Object.assign(room, updates);
+  persistRooms();
   return room;
 }
 
@@ -144,6 +159,7 @@ export function updatePlayerScore(roomId, playerId, points) {
   if (player) {
     player.score += points;
   }
+  persistRooms();
   return room;
 }
 
@@ -155,6 +171,7 @@ export function markPlayerDisconnected(roomId, playerId) {
   if (player) {
     player.disconnected = true;
     player.disconnectedAt = Date.now();
+    persistRooms();
   }
 }
 
@@ -166,6 +183,7 @@ export function cancelPlayerDisconnect(roomId, playerId) {
   if (player) {
     player.disconnected = false;
     player.disconnectedAt = null;
+    persistRooms();
   }
 }
 
@@ -210,6 +228,7 @@ export function rejoinRoom(roomId, newSocketId, playerName, sessionId) {
       room.currentRound.guesserId = newSocketId;
     }
 
+    persistRooms();
     return {
       success: true,
       room,
@@ -237,6 +256,7 @@ export function rejoinRoom(roomId, newSocketId, playerName, sessionId) {
     };
     room.players.set(newSocketId, newPlayer);
 
+    persistRooms();
     return {
       success: true,
       room,

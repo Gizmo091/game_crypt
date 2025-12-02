@@ -11,6 +11,9 @@ services:
       - PORT=4174
       - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost}
       - GITHUB_REPO_URL=${GITHUB_REPO_URL:-}
+      - PERSISTENT_PATH=/data
+    volumes:
+      - server_data:/data
     command: >
       sh -c "
         rm -rf /app && mkdir -p /app
@@ -21,3 +24,6 @@ services:
         exec node index.js
       "
     restart: unless-stopped
+
+volumes:
+  server_data:
