@@ -6,7 +6,7 @@ import { useGameStore } from './stores/gameStore'
 
 const router = useRouter()
 const store = useGameStore()
-const { connect, disconnect, on, off, rejoinRoom } = useSocket()
+const { connect, disconnect, on, off, rejoinRoom, setOnReconnect } = useSocket()
 
 const stats = ref({
   connectedPlayers: 0,
@@ -24,6 +24,17 @@ function handleRejoined(data) {
 
   if (data.currentRound) {
     store.setRound(data.currentRound)
+  }
+
+  // Stocker lastPhrase et nextGuesser pour between_rounds
+  if (data.lastPhrase) {
+    store.setLastPhrase(data.lastPhrase)
+  }
+  if (data.nextGuesser) {
+    store.setNextGuesser(data.nextGuesser)
+  }
+
+  if (data.room.gameState === 'playing' || data.room.gameState === 'between_rounds') {
     router.push(`/game/${data.room.id}`)
   } else if (data.room.gameState === 'waiting') {
     router.push(`/lobby/${data.room.id}`)
@@ -58,6 +69,11 @@ onMounted(() => {
   on('room:rejoined', handleRejoined)
   on('room:rejoin-failed', handleRejoinFailed)
   on('stats:update', handleStatsUpdate)
+
+  // Configurer le callback de reconnexion automatique
+  setOnReconnect(() => {
+    tryRejoin()
+  })
 
   // Attendre que la connexion soit établie avant de tenter le rejoin
   let checkCount = 0

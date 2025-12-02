@@ -37,6 +37,8 @@ export const useGameStore = defineStore('game', () => {
   const codedPhrase = ref('')
   const isGuesser = ref(false)
   const timeRemaining = ref(0)
+  const roundStartedAt = ref(null)
+  const roundDuration = ref(0)
   const lastPhrase = ref(null)
   const nextGuesser = ref(null)
 
@@ -73,10 +75,23 @@ export const useGameStore = defineStore('game', () => {
     codedPhrase.value = round.codedPhrase || ''
     isGuesser.value = round.isGuesser
     timeRemaining.value = round.timeRemaining
+    // Stocker pour le calcul local du timer
+    if (round.roundStartedAt) {
+      roundStartedAt.value = round.roundStartedAt
+      roundDuration.value = round.roundDuration
+    }
   }
 
   function setTimeRemaining(time) {
     timeRemaining.value = time
+  }
+
+  function getCalculatedTimeRemaining() {
+    if (!roundStartedAt.value || !roundDuration.value) {
+      return timeRemaining.value
+    }
+    const elapsed = Math.floor((Date.now() - roundStartedAt.value) / 1000)
+    return Math.max(0, roundDuration.value - elapsed)
   }
 
   function updatePlayerScores(newPlayers) {
@@ -121,6 +136,8 @@ export const useGameStore = defineStore('game', () => {
     codedPhrase.value = ''
     isGuesser.value = false
     timeRemaining.value = 0
+    roundStartedAt.value = null
+    roundDuration.value = 0
     lastPhrase.value = null
     nextGuesser.value = null
     clearSession()
@@ -138,6 +155,8 @@ export const useGameStore = defineStore('game', () => {
     codedPhrase,
     isGuesser,
     timeRemaining,
+    roundStartedAt,
+    roundDuration,
     lastPhrase,
     nextGuesser,
     currentPlayer,
@@ -148,6 +167,7 @@ export const useGameStore = defineStore('game', () => {
     setGameState,
     setRound,
     setTimeRemaining,
+    getCalculatedTimeRemaining,
     updatePlayerScores,
     setLastPhrase,
     setNextGuesser,

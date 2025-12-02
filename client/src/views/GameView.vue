@@ -18,6 +18,7 @@ const lastPhrase = ref(null)
 const betweenRounds = ref(false)
 const nextGuesser = ref(null)
 const showOriginalPhrase = ref(false)
+let localTimerInterval = null
 
 const guesserName = computed(() => {
   if (!store.currentRound) return ''
@@ -25,11 +26,28 @@ const guesserName = computed(() => {
   return guesser?.name || 'Inconnu'
 })
 
+function startLocalTimer() {
+  stopLocalTimer()
+  // Mettre à jour le timer localement toutes les secondes
+  localTimerInterval = setInterval(() => {
+    const calculatedTime = store.getCalculatedTimeRemaining()
+    store.setTimeRemaining(calculatedTime)
+  }, 1000)
+}
+
+function stopLocalTimer() {
+  if (localTimerInterval) {
+    clearInterval(localTimerInterval)
+    localTimerInterval = null
+  }
+}
+
 function handleRound(data) {
   store.setRound(data)
   betweenRounds.value = false
   nextGuesser.value = null
   showOriginalPhrase.value = false
+  startLocalTimer()
 }
 
 function handleTimer(data) {
@@ -45,6 +63,7 @@ function handleRoundEnd(data) {
   lastPhrase.value = data.phrase
   betweenRounds.value = true
   nextGuesser.value = data.nextGuesser
+  stopLocalTimer()
 }
 
 function handleNextRound() {
@@ -55,6 +74,7 @@ function handleGameEnded(data) {
   winner.value = data.winner
   store.updatePlayerScores(data.players)
   showEndModal.value = true
+  stopLocalTimer()
 }
 
 function handlePlayerLeft(data) {
@@ -78,6 +98,28 @@ function handleBackToLobby() {
   router.push(`/lobby/${route.params.roomId}`)
 }
 
+function syncFromStore() {
+  // Si on rejoint pendant "between_rounds", afficher l'écran intermédiaire
+  if (store.gameState === 'between_rounds') {
+    betweenRounds.value = true
+    stopLocalTimer()
+    // Récupérer les valeurs depuis le store
+    if (store.lastPhrase) {
+      lastPhrase.value = store.lastPhrase
+    }
+    if (store.nextGuesser) {
+      nextGuesser.value = store.nextGuesser
+    }
+  } else if (store.gameState === 'playing') {
+    betweenRounds.value = false
+    // Démarrer le timer local pour continuer le décompte
+    startLocalTimer()
+  } else {
+    betweenRounds.value = false
+    stopLocalTimer()
+  }
+}
+
 onMounted(() => {
   on('game:round', handleRound)
   on('game:timer', handleTimer)
@@ -86,6 +128,7 @@ onMounted(() => {
   on('game:ended', handleGameEnded)
   on('room:player-left', handlePlayerLeft)
   on('room:manager-changed', handleManagerChanged)
+  on('room:rejoined', syncFromStore)
 
   // Attendre un peu pour laisser le temps à la reconnexion
   setTimeout(() => {
@@ -97,17 +140,7 @@ onMounted(() => {
         router.push('/')
       }
     } else {
-      // Si on rejoint pendant "between_rounds", afficher l'écran intermédiaire
-      if (store.gameState === 'between_rounds') {
-        betweenRounds.value = true
-        // Récupérer les valeurs depuis le store si on rejoint en cours de partie
-        if (store.lastPhrase) {
-          lastPhrase.value = store.lastPhrase
-        }
-        if (store.nextGuesser) {
-          nextGuesser.value = store.nextGuesser
-        }
-      }
+      syncFromStore()
     }
   }, 500)
 })
@@ -120,6 +153,8 @@ onUnmounted(() => {
   off('game:ended', handleGameEnded)
   off('room:player-left', handlePlayerLeft)
   off('room:manager-changed', handleManagerChanged)
+  off('room:rejoined', syncFromStore)
+  stopLocalTimer()
 })
 </script>
 

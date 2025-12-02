@@ -6,6 +6,9 @@ const isConnected = ref(false)
 const rooms = ref([])
 const socketId = ref(null)
 
+// Callback pour la reconnexion automatique
+let onReconnectCallback = null
+
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:4174'
 
 export function useSocket() {
@@ -19,13 +22,23 @@ export function useSocket() {
 
     socketInstance = io(SERVER_URL, {
       transports: ['websocket', 'polling'],
-      withCredentials: true
+      withCredentials: true,
+      reconnection: true,
+      reconnectionDelay: 500,
+      reconnectionAttempts: Infinity
     })
 
     socketInstance.on('connect', () => {
+      const wasConnected = isConnected.value
       isConnected.value = true
       socketId.value = socketInstance.id
       console.log('Connected to server')
+
+      // Si c'est une reconnexion, appeler le callback
+      if (wasConnected === false && onReconnectCallback) {
+        console.log('Reconnection detected, triggering rejoin...')
+        onReconnectCallback()
+      }
     })
 
     socketInstance.on('disconnect', () => {
@@ -37,6 +50,10 @@ export function useSocket() {
     socketInstance.on('room:list-update', (roomList) => {
       rooms.value = roomList
     })
+  }
+
+  function setOnReconnect(callback) {
+    onReconnectCallback = callback
   }
 
   function disconnect() {
@@ -130,6 +147,7 @@ export function useSocket() {
     nextRound,
     endGame,
     requestRoomList,
-    getSocketId
+    getSocketId,
+    setOnReconnect
   }
 }

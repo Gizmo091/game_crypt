@@ -190,17 +190,35 @@ export function setupSocketHandlers(io) {
       };
 
       // Envoyer l'état actuel de la manche si une partie est en cours
-      if (room.gameState === 'playing' && room.currentRound) {
+      if ((room.gameState === 'playing' || room.gameState === 'between_rounds') && room.currentRound) {
         const isGuesser = socket.id === room.currentRound.guesserId;
         roomData.currentRound = {
           guesserId: room.currentRound.guesserId,
           timeRemaining: getTimeRemaining(room),
+          roundStartedAt: room.currentRound.roundStartedAt,
+          roundDuration: room.currentRound.roundDuration,
           phrase: isGuesser ? room.currentRound.phrase.coded : room.currentRound.phrase.original,
           isGuesser
         };
         // Les non-devieurs ont aussi besoin de la phrase codée
         if (!isGuesser) {
           roomData.currentRound.codedPhrase = room.currentRound.phrase.coded;
+        }
+
+        // Si entre les manches, envoyer la phrase complète et le prochain guesser
+        if (room.gameState === 'between_rounds') {
+          roomData.lastPhrase = room.currentRound.phrase;
+          // Calculer le prochain guesser
+          const players = Array.from(room.players.values());
+          const sortedPlayers = [...players].sort((a, b) => {
+            const aRounds = a.roundsAsGuesser || 0;
+            const bRounds = b.roundsAsGuesser || 0;
+            if (aRounds !== bRounds) return aRounds - bRounds;
+            return a.joinedAt - b.joinedAt;
+          });
+          if (sortedPlayers.length > 0) {
+            roomData.nextGuesser = { id: sortedPlayers[0].id, name: sortedPlayers[0].name };
+          }
         }
       }
 
