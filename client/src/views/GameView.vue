@@ -53,7 +53,9 @@ function handleRound(data) {
 function handleTimer(data) {
   // Only use server timer if we don't have local calculation data
   // This avoids conflicts between local and server timer updates
-  if (!store.roundStartedAt || !store.roundDuration) {
+  const hasLocalData = store.roundStartedAt > 0 && store.roundDuration > 0
+  if (!hasLocalData) {
+    console.log('[GameView] handleTimer: using server time', data.timeRemaining, '(no local data)')
     store.setTimeRemaining(data.timeRemaining)
   }
 }

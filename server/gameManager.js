@@ -1,4 +1,4 @@
-import { getRoom, updateRoomState, updatePlayerScore, getAllRoomsMap } from './roomManager.js';
+import { getRoom, updateRoomState, updatePlayerScore, getAllRoomsMap, persistRooms } from './roomManager.js';
 import { incrementGamesPlayed, setPhrasesCountGetter } from './statsManager.js';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
@@ -65,6 +65,9 @@ export function startGame(roomId, io) {
     p.consecutiveGuesserRounds = 0;
   });
 
+  // Persister le changement d'état
+  persistRooms();
+
   return startNewRound(roomId, io);
 }
 
@@ -118,6 +121,9 @@ export function startNewRound(roomId, io) {
     started: true,
     pointAwarded: false
   };
+
+  // Persister immédiatement après création du round
+  persistRooms();
 
   startTimer(roomId, io);
 
@@ -192,6 +198,7 @@ export function validatePoint(roomId, io) {
   }
 
   room.currentRound.pointAwarded = true;
+  // Note: updatePlayerScore appelle déjà persistRooms
   updatePlayerScore(roomId, room.currentRound.guesserId, 1);
 
   io.to(roomId).emit('game:point-awarded', {
@@ -265,6 +272,9 @@ function endRound(roomId, io, guessed) {
   // Passer en état "between_rounds"
   room.gameState = 'between_rounds';
 
+  // Persister le changement d'état
+  persistRooms();
+
   // Calculer le prochain joueur à deviner
   const nextGuesser = getNextGuesser(room);
 
@@ -287,6 +297,7 @@ export function nextRound(roomId, io) {
   }
 
   room.gameState = 'playing';
+  // Note: persistRooms sera appelé dans startNewRound
 
   const result = startNewRound(roomId, io);
   if (result.success) {
@@ -329,6 +340,9 @@ export function endGame(roomId, io) {
 
   room.gameState = 'waiting';
   room.currentRound = null;
+
+  // Persister le changement d'état
+  persistRooms();
 
   const players = Array.from(room.players.values());
   const winner = players.reduce((prev, current) =>

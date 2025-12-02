@@ -70,6 +70,11 @@ export const useGameStore = defineStore('game', () => {
   }
 
   function setRound(round) {
+    console.log('[GameStore] setRound called with:', {
+      timeRemaining: round.timeRemaining,
+      roundStartedAt: round.roundStartedAt,
+      roundDuration: round.roundDuration
+    })
     currentRound.value = round
     phrase.value = round.phrase
     codedPhrase.value = round.codedPhrase || ''
@@ -88,10 +93,12 @@ export const useGameStore = defineStore('game', () => {
 
   function getCalculatedTimeRemaining() {
     if (!roundStartedAt.value || !roundDuration.value) {
+      console.log('[GameStore] getCalculatedTimeRemaining: no roundStartedAt/roundDuration, returning', timeRemaining.value)
       return timeRemaining.value
     }
     const elapsed = Math.floor((Date.now() - roundStartedAt.value) / 1000)
-    return Math.max(0, roundDuration.value - elapsed)
+    const calculated = Math.max(0, roundDuration.value - elapsed)
+    return calculated
   }
 
   function updatePlayerScores(newPlayers) {

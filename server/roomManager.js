@@ -5,7 +5,7 @@ import { saveRooms, loadRooms, isPersistenceEnabled } from './persistenceManager
 const rooms = loadRooms();
 
 // Fonction pour sauvegarder après modification
-function persistRooms() {
+export function persistRooms() {
   if (isPersistenceEnabled()) {
     saveRooms(rooms);
   }

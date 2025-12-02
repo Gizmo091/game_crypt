@@ -17,6 +17,15 @@ const stats = ref({
 })
 
 function handleRejoined(data) {
+  console.log('[App] handleRejoined received:', {
+    gameState: data.room?.gameState,
+    hasCurrentRound: !!data.currentRound,
+    currentRound: data.currentRound ? {
+      timeRemaining: data.currentRound.timeRemaining,
+      roundStartedAt: data.currentRound.roundStartedAt,
+      roundDuration: data.currentRound.roundDuration
+    } : null
+  })
   store.setRoom(data.room)
   store.setPlayers(data.players)
   store.setManager(data.isManager)
