@@ -351,6 +351,13 @@ export function restoreTimers(io) {
 
   for (const [roomId, room] of rooms.entries()) {
     if (room.gameState === 'playing' && room.currentRound) {
+      // Vérifier l'état incohérent : point déjà accordé mais jeu pas terminé
+      if (room.currentRound.pointAwarded) {
+        console.log(`[GameManager] Room ${roomId} has inconsistent state (pointAwarded=true but still playing), ending round`);
+        endRound(roomId, io, true);
+        continue;
+      }
+
       const timeRemaining = getTimeRemaining(room);
 
       if (timeRemaining > 0) {

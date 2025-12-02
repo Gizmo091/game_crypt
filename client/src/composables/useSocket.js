@@ -8,16 +8,19 @@ const socketId = ref(null)
 
 // Callback pour la reconnexion automatique
 let onReconnectCallback = null
+// Tracker si on a déjà été connecté (pour distinguer première connexion vs reconnexion)
+let hasBeenConnectedBefore = false
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:4174'
 
 export function useSocket() {
   function connect() {
-    // Éviter les connexions multiples
-    if (socketInstance?.connected) return
+    // Éviter les connexions multiples - ne créer qu'une seule instance
     if (socketInstance) {
-      socketInstance.removeAllListeners()
-      socketInstance.disconnect()
+      // Si déjà connecté, ne rien faire
+      if (socketInstance.connected) return
+      // Sinon, laisser Socket.io gérer la reconnexion automatique
+      return
     }
 
     socketInstance = io(SERVER_URL, {
@@ -29,22 +32,22 @@ export function useSocket() {
     })
 
     socketInstance.on('connect', () => {
-      const wasConnected = isConnected.value
       isConnected.value = true
       socketId.value = socketInstance.id
-      console.log('Connected to server')
+      console.log('Connected to server with id:', socketInstance.id)
 
-      // Si c'est une reconnexion, appeler le callback
-      if (wasConnected === false && onReconnectCallback) {
+      // Si c'est une reconnexion (pas la première connexion), appeler le callback
+      if (hasBeenConnectedBefore && onReconnectCallback) {
         console.log('Reconnection detected, triggering rejoin...')
         onReconnectCallback()
       }
+      hasBeenConnectedBefore = true
     })
 
-    socketInstance.on('disconnect', () => {
+    socketInstance.on('disconnect', (reason) => {
       isConnected.value = false
       socketId.value = null
-      console.log('Disconnected from server')
+      console.log('Disconnected from server:', reason)
     })
 
     socketInstance.on('room:list-update', (roomList) => {
@@ -63,6 +66,7 @@ export function useSocket() {
       socketInstance = null
       isConnected.value = false
       socketId.value = null
+      hasBeenConnectedBefore = false
     }
   }
 
