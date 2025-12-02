@@ -127,24 +127,24 @@ onUnmounted(() => {
     <footer>
       <div class="stats">
         <div class="stat-item">
+          <span class="stat-label">Joueurs en ligne</span>
           <span class="stat-value">{{ stats.connectedPlayers }}</span>
-          <span class="stat-label">en ligne</span>
         </div>
         <div class="stat-item">
+          <span class="stat-label">Record de joueurs</span>
           <span class="stat-value">{{ stats.maxConnectedPlayers }}</span>
-          <span class="stat-label">record</span>
         </div>
         <div class="stat-item">
-          <span class="stat-value">{{ stats.totalGamesPlayed }}</span>
           <span class="stat-label">parties jouées</span>
+          <span class="stat-value">{{ stats.totalGamesPlayed }}</span>
         </div>
         <div class="stat-item">
-          <span class="stat-value">{{ stats.phrasesFr }}</span>
           <span class="stat-label">phrases FR</span>
+          <span class="stat-value">{{ stats.phrasesFr }}</span>
         </div>
         <div class="stat-item">
-          <span class="stat-value">{{ stats.phrasesEn }}</span>
           <span class="stat-label">phrases EN</span>
+          <span class="stat-value">{{ stats.phrasesEn }}</span>
         </div>
       </div>
     </footer>
