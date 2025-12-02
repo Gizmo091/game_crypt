@@ -83,6 +83,10 @@ function handleGameEnded(data) {
   stopLocalTimer()
 }
 
+function handlePlayerJoined(data) {
+  store.setPlayers(data.players)
+}
+
 function handlePlayerLeft(data) {
   store.setPlayers(data.players)
 }
@@ -132,6 +136,7 @@ onMounted(() => {
   on('game:point-awarded', handlePointAwarded)
   on('game:round-end', handleRoundEnd)
   on('game:ended', handleGameEnded)
+  on('room:player-joined', handlePlayerJoined)
   on('room:player-left', handlePlayerLeft)
   on('room:manager-changed', handleManagerChanged)
   on('room:rejoined', syncFromStore)
@@ -157,6 +162,7 @@ onUnmounted(() => {
   off('game:point-awarded', handlePointAwarded)
   off('game:round-end', handleRoundEnd)
   off('game:ended', handleGameEnded)
+  off('room:player-joined', handlePlayerJoined)
   off('room:player-left', handlePlayerLeft)
   off('room:manager-changed', handleManagerChanged)
   off('room:rejoined', syncFromStore)
