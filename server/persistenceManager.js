@@ -104,6 +104,7 @@ export function loadRooms() {
   try {
     const data = JSON.parse(readFileSync(filePath, 'utf-8'));
     const rooms = new Map();
+    let gamesInProgress = 0;
 
     for (const [roomId, roomData] of Object.entries(data)) {
       const room = {
@@ -118,10 +119,14 @@ export function loadRooms() {
         }
       }
 
+      if (room.gameState === 'playing' || room.gameState === 'between_rounds') {
+        gamesInProgress++;
+      }
+
       rooms.set(roomId, room);
     }
 
-    console.log(`[Persistence] Loaded ${rooms.size} rooms`);
+    console.log(`[Persistence] Loaded ${rooms.size} rooms (${gamesInProgress} games in progress)`);
     return rooms;
   } catch (error) {
     console.error('[Persistence] Error loading rooms:', error.message);

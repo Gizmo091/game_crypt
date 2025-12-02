@@ -1,4 +1,4 @@
-import { getRoom, updateRoomState, updatePlayerScore } from './roomManager.js';
+import { getRoom, updateRoomState, updatePlayerScore, getAllRoomsMap } from './roomManager.js';
 import { incrementGamesPlayed, setPhrasesCountGetter } from './statsManager.js';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
@@ -113,7 +113,8 @@ export function startNewRound(roomId, io) {
   room.currentRound = {
     guesserId,
     phrase,
-    timeRemaining: room.roundTime,
+    roundStartedAt: Date.now(),
+    roundDuration: room.roundTime,
     started: true,
     pointAwarded: false
   };
@@ -124,15 +125,34 @@ export function startNewRound(roomId, io) {
     success: true,
     round: {
       guesserId,
-      timeRemaining: room.roundTime
+      timeRemaining: room.currentRound.roundDuration
     },
     phrase
   };
 }
 
+export function getTimeRemaining(room) {
+  if (!room.currentRound) return 0;
+  const elapsed = Math.floor((Date.now() - room.currentRound.roundStartedAt) / 1000);
+  return Math.max(0, room.currentRound.roundDuration - elapsed);
+}
+
 function startTimer(roomId, io) {
   if (timers.has(roomId)) {
     clearInterval(timers.get(roomId));
+  }
+
+  const room = getRoom(roomId);
+  if (!room || !room.currentRound) return;
+
+  // Envoyer immédiatement le temps restant actuel
+  const initialTimeRemaining = getTimeRemaining(room);
+  io.to(roomId).emit('game:timer', { timeRemaining: initialTimeRemaining });
+
+  // Si déjà expiré, terminer le round
+  if (initialTimeRemaining <= 0) {
+    endRound(roomId, io, false);
+    return;
   }
 
   const timer = setInterval(() => {
@@ -143,13 +163,11 @@ function startTimer(roomId, io) {
       return;
     }
 
-    room.currentRound.timeRemaining--;
+    const timeRemaining = getTimeRemaining(room);
 
-    io.to(roomId).emit('game:timer', {
-      timeRemaining: room.currentRound.timeRemaining
-    });
+    io.to(roomId).emit('game:timer', { timeRemaining });
 
-    if (room.currentRound.timeRemaining <= 0) {
+    if (timeRemaining <= 0) {
       clearInterval(timer);
       timers.delete(roomId);
       endRound(roomId, io, false);
@@ -321,5 +339,31 @@ export function cleanupRoom(roomId) {
   if (timers.has(roomId)) {
     clearInterval(timers.get(roomId));
     timers.delete(roomId);
+  }
+}
+
+// Restaurer les timers pour les parties en cours après redémarrage du serveur
+export function restoreTimers(io) {
+  const rooms = getAllRoomsMap();
+  let restoredCount = 0;
+
+  for (const [roomId, room] of rooms.entries()) {
+    if (room.gameState === 'playing' && room.currentRound) {
+      const timeRemaining = getTimeRemaining(room);
+
+      if (timeRemaining > 0) {
+        console.log(`[GameManager] Restoring timer for room ${roomId} (${timeRemaining}s remaining)`);
+        startTimer(roomId, io);
+        restoredCount++;
+      } else {
+        // Le temps est écoulé, terminer le round
+        console.log(`[GameManager] Room ${roomId} timer expired during restart, ending round`);
+        endRound(roomId, io, false);
+      }
+    }
+  }
+
+  if (restoredCount > 0) {
+    console.log(`[GameManager] Restored ${restoredCount} game timers`);
   }
 }

@@ -17,7 +17,9 @@ import {
   skipRound,
   nextRound,
   endGame,
-  cleanupRoom
+  cleanupRoom,
+  restoreTimers,
+  getTimeRemaining
 } from './gameManager.js';
 
 import {
@@ -39,6 +41,9 @@ function broadcastStats(io) {
 export function setupSocketHandlers(io) {
   // Enregistrer l'instance io pour les stats
   setIoInstance(io);
+
+  // Restaurer les timers des parties en cours (après redémarrage serveur)
+  restoreTimers(io);
 
   // Démarrer le broadcast périodique des stats
   if (!statsInterval) {
@@ -118,7 +123,7 @@ export function setupSocketHandlers(io) {
       if ((room.gameState === 'playing' || room.gameState === 'between_rounds') && room.currentRound) {
         joinData.currentRound = {
           guesserId: room.currentRound.guesserId,
-          timeRemaining: room.currentRound.timeRemaining,
+          timeRemaining: getTimeRemaining(room),
           phrase: room.currentRound.phrase.original, // Le nouveau joueur n'est jamais le guesser
           codedPhrase: room.currentRound.phrase.coded, // La phrase codée pour aider
           isGuesser: false
@@ -189,7 +194,7 @@ export function setupSocketHandlers(io) {
         const isGuesser = socket.id === room.currentRound.guesserId;
         roomData.currentRound = {
           guesserId: room.currentRound.guesserId,
-          timeRemaining: room.currentRound.timeRemaining,
+          timeRemaining: getTimeRemaining(room),
           phrase: isGuesser ? room.currentRound.phrase.coded : room.currentRound.phrase.original,
           isGuesser
         };

@@ -46,6 +46,10 @@ export function getRoom(roomId) {
   return rooms.get(roomId);
 }
 
+export function getAllRoomsMap() {
+  return rooms;
+}
+
 export function getAllRooms() {
   return Array.from(rooms.values()).map(room => ({
     id: room.id,
