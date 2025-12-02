@@ -1,4 +1,3 @@
-import { getPhrasesCount } from './gameManager.js';
 import { saveStats, loadStats, isPersistenceEnabled } from './persistenceManager.js';
 
 // Charger les stats depuis le stockage persistant au démarrage
@@ -16,6 +15,13 @@ function persistStats() {
 
 // Référence à l'instance io pour compter les connexions réelles
 let ioInstance = null;
+
+// Getter pour les phrases (évite la dépendance circulaire avec gameManager)
+let phrasesCountGetter = null;
+
+export function setPhrasesCountGetter(getter) {
+  phrasesCountGetter = getter;
+}
 
 export function setIoInstance(io) {
   ioInstance = io;
@@ -41,7 +47,7 @@ export function getStats() {
   updateMaxConnected(connectedPlayers);
 
   // Obtenir le nombre de phrases par langue
-  const phrasesCount = getPhrasesCount();
+  const phrasesCount = phrasesCountGetter ? phrasesCountGetter() : { fr: 0, en: 0 };
 
   return {
     connectedPlayers,

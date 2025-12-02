@@ -1,5 +1,5 @@
 import { getRoom, updateRoomState, updatePlayerScore } from './roomManager.js';
-import { incrementGamesPlayed } from './statsManager.js';
+import { incrementGamesPlayed, setPhrasesCountGetter } from './statsManager.js';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -38,6 +38,9 @@ export function getPhrasesCount() {
     en: phrases.en.length
   };
 }
+
+// Enregistrer le getter pour statsManager (évite la dépendance circulaire)
+setPhrasesCountGetter(getPhrasesCount);
 
 const timers = new Map();
 
