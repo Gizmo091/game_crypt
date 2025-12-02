@@ -1,3 +1,5 @@
+import { getPhrasesCount } from './gameManager.js';
+
 // Statistiques du serveur
 const stats = {
   maxConnectedPlayers: 0,
@@ -28,9 +30,14 @@ export function getStats() {
   // Mettre à jour le max si nécessaire
   updateMaxConnected(connectedPlayers);
 
+  // Obtenir le nombre de phrases par langue
+  const phrasesCount = getPhrasesCount();
+
   return {
     connectedPlayers,
     maxConnectedPlayers: stats.maxConnectedPlayers,
-    totalGamesPlayed: stats.totalGamesPlayed
+    totalGamesPlayed: stats.totalGamesPlayed,
+    phrasesFr: phrasesCount.fr,
+    phrasesEn: phrasesCount.en
   };
 }

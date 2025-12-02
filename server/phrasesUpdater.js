@@ -7,7 +7,8 @@ import { reloadPhrases } from './gameManager.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const PHRASES_PATH = join(__dirname, 'data', 'phrases.json');
+const PHRASES_FR_PATH = join(__dirname, 'data', 'phrases_fr.json');
+const PHRASES_EN_PATH = join(__dirname, 'data', 'phrases_en.json');
 const UPDATE_INTERVAL = 60 * 60 * 1000; // 1 heure
 
 let updateTimer = null;
@@ -54,6 +55,34 @@ function getRawFileUrl(repoUrl, filePath) {
   return null;
 }
 
+async function downloadPhrasesForLanguage(repoUrl, lang) {
+  const rawUrl = getRawFileUrl(repoUrl, `server/data/phrases_${lang}.json`);
+
+  if (!rawUrl) {
+    console.log(`Unable to build raw file URL for ${lang}, skipping`);
+    return null;
+  }
+
+  console.log(`Fetching ${lang} phrases from: ${rawUrl}`);
+
+  const response = await fetch(rawUrl);
+
+  if (!response.ok) {
+    console.error(`Failed to fetch ${lang} phrases: ${response.status} ${response.statusText}`);
+    return null;
+  }
+
+  const rawText = await response.text();
+  const phrases = JSON.parse(rawText);
+
+  if (!Array.isArray(phrases) || phrases.length === 0) {
+    console.error(`Invalid ${lang} phrases format: must be non-empty array`);
+    return null;
+  }
+
+  return phrases;
+}
+
 async function downloadPhrases() {
   const repoUrl = getRepoUrl();
 
@@ -62,61 +91,33 @@ async function downloadPhrases() {
     return false;
   }
 
-  const rawUrl = getRawFileUrl(repoUrl, 'server/data/phrases.json');
-
-  if (!rawUrl) {
-    console.log('Unable to build raw file URL, skipping phrases update');
-    return false;
-  }
-
-  console.log(`Fetching phrases from: ${rawUrl}`);
-
   try {
-    const response = await fetch(rawUrl);
+    const [frPhrases, enPhrases] = await Promise.all([
+      downloadPhrasesForLanguage(repoUrl, 'fr'),
+      downloadPhrasesForLanguage(repoUrl, 'en')
+    ]);
 
-    if (!response.ok) {
-      console.error(`Failed to fetch phrases: ${response.status} ${response.statusText}`);
-      return false;
+    let updated = false;
+
+    if (frPhrases) {
+      writeFileSync(PHRASES_FR_PATH, JSON.stringify(frPhrases, null, 2), 'utf-8');
+      console.log(`FR phrases updated: ${frPhrases.length} phrases`);
+      updated = true;
     }
 
-    const rawText = await response.text();
-
-    // Tenter de parser le JSON - si invalide, on garde l'ancien
-    let newPhrases;
-    try {
-      newPhrases = JSON.parse(rawText);
-    } catch (parseError) {
-      console.error('Invalid JSON received, keeping current phrases:', parseError.message);
-      return false;
+    if (enPhrases) {
+      writeFileSync(PHRASES_EN_PATH, JSON.stringify(enPhrases, null, 2), 'utf-8');
+      console.log(`EN phrases updated: ${enPhrases.length} phrases`);
+      updated = true;
     }
 
-    // Valider le format
-    if (!newPhrases.fr || !newPhrases.en) {
-      console.error('Invalid phrases format: missing fr or en keys, keeping current phrases');
-      return false;
+    if (updated) {
+      reloadPhrases();
     }
 
-    // Valider que les tableaux contiennent des éléments valides
-    if (!Array.isArray(newPhrases.fr) || !Array.isArray(newPhrases.en)) {
-      console.error('Invalid phrases format: fr and en must be arrays, keeping current phrases');
-      return false;
-    }
-
-    if (newPhrases.fr.length === 0 || newPhrases.en.length === 0) {
-      console.error('Invalid phrases format: empty arrays, keeping current phrases');
-      return false;
-    }
-
-    // Sauvegarder les nouvelles phrases
-    writeFileSync(PHRASES_PATH, JSON.stringify(newPhrases, null, 2), 'utf-8');
-
-    // Recharger en mémoire
-    reloadPhrases();
-
-    console.log(`Phrases updated successfully: ${newPhrases.fr.length} FR, ${newPhrases.en.length} EN`);
-    return true;
+    return updated;
   } catch (error) {
-    console.error('Error updating phrases, keeping current file:', error.message);
+    console.error('Error updating phrases, keeping current files:', error.message);
     return false;
   }
 }

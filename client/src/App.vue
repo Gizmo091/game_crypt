@@ -11,7 +11,9 @@ const { connect, disconnect, on, off, rejoinRoom } = useSocket()
 const stats = ref({
   connectedPlayers: 0,
   maxConnectedPlayers: 0,
-  totalGamesPlayed: 0
+  totalGamesPlayed: 0,
+  phrasesFr: 0,
+  phrasesEn: 0
 })
 
 function handleRejoined(data) {
@@ -111,6 +113,14 @@ onUnmounted(() => {
           <span class="stat-value">{{ stats.totalGamesPlayed }}</span>
           <span class="stat-label">parties jouées</span>
         </div>
+        <div class="stat-item">
+          <span class="stat-value">{{ stats.phrasesFr }}</span>
+          <span class="stat-label">phrases FR</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value">{{ stats.phrasesEn }}</span>
+          <span class="stat-label">phrases EN</span>
+        </div>
       </div>
     </footer>
   </div>
@@ -174,7 +184,8 @@ footer {
 .stats {
   display: flex;
   justify-content: center;
-  gap: 3rem;
+  flex-wrap: wrap;
+  gap: 2rem;
 }
 
 .stat-item {
@@ -199,7 +210,7 @@ footer {
 
 @media (max-width: 480px) {
   .stats {
-    gap: 1.5rem;
+    gap: 1rem 1.5rem;
   }
 
   .stat-value {

@@ -7,21 +7,36 @@ import { dirname, join } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const PHRASES_PATH = join(__dirname, 'data', 'phrases.json');
+const PHRASES_FR_PATH = join(__dirname, 'data', 'phrases_fr.json');
+const PHRASES_EN_PATH = join(__dirname, 'data', 'phrases_en.json');
 
 // Phrases en mémoire
-let phrases = JSON.parse(readFileSync(PHRASES_PATH, 'utf-8'));
+let phrases = {
+  fr: JSON.parse(readFileSync(PHRASES_FR_PATH, 'utf-8')),
+  en: JSON.parse(readFileSync(PHRASES_EN_PATH, 'utf-8'))
+};
 
-// Recharger les phrases depuis le fichier
+// Recharger les phrases depuis les fichiers
 export function reloadPhrases() {
   try {
-    phrases = JSON.parse(readFileSync(PHRASES_PATH, 'utf-8'));
+    phrases = {
+      fr: JSON.parse(readFileSync(PHRASES_FR_PATH, 'utf-8')),
+      en: JSON.parse(readFileSync(PHRASES_EN_PATH, 'utf-8'))
+    };
     console.log('Phrases reloaded in memory');
     return true;
   } catch (error) {
     console.error('Error reloading phrases:', error.message);
     return false;
   }
+}
+
+// Obtenir le nombre de phrases par langue
+export function getPhrasesCount() {
+  return {
+    fr: phrases.fr.length,
+    en: phrases.en.length
+  };
 }
 
 const timers = new Map();
